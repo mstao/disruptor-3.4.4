@@ -79,6 +79,10 @@ tasks.withType(Test) {
     maxParallelForks = Runtime.runtime.availableProcessors() / 2
 }
 
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
 compilePerfJava {
     classpath += sourceSets.main.runtimeClasspath
     classpath += sourceSets.test.runtimeClasspath
