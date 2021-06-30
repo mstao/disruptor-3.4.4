@@ -260,6 +260,7 @@ public final class RingBuffer<E> extends RingBufferFields<E> implements Cursored
     @Override
     public long next()
     {
+        // 获取下一个可用的序号
         return sequencer.next();
     }
 
@@ -871,6 +872,7 @@ public final class RingBuffer<E> extends RingBufferFields<E> implements Cursored
     @Override
     public void publish(long sequence)
     {
+        // 发布消息
         sequencer.publish(sequence);
     }
 

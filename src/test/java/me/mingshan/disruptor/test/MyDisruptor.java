@@ -59,7 +59,6 @@ public class MyDisruptor {
         ProducerType.SINGLE,
         new SleepingWaitStrategy());
 
-
     disruptor.handleEventsWith(new EventHandler<Message>() {
       @Override
       public void onEvent(Message event, long sequence, boolean endOfBatch) throws Exception {

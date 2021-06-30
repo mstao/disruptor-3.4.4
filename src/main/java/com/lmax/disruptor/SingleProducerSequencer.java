@@ -111,6 +111,8 @@ public final class SingleProducerSequencer extends SingleProducerSequencerFields
     }
 
     /**
+     * 核心方法，生产者获取下一个可用的序号。
+     *
      * @see Sequencer#next(int)
      */
     @Override
@@ -121,16 +123,35 @@ public final class SingleProducerSequencer extends SingleProducerSequencerFields
             throw new IllegalArgumentException("n must be > 0");
         }
 
+        // 当前的序号，初始值为-1
         long nextValue = this.nextValue;
 
+        // 将要获取的序号
         long nextSequence = nextValue + n;
+        // wrapPoint是一个临界序号，必须比当前最小的未消费序号还小
         long wrapPoint = nextSequence - bufferSize;
+        // 当前所有消费者最小的序号， 默认为-1，缓存值，上一次计算最小序号的结果
         long cachedGatingSequence = this.cachedValue;
 
+
+        /*
+         * 核心逻辑：
+         *
+         * 生产者获取的可用序号必须小于所有消费者的序号最小的值。这样保证生产者不会将消费者未消费的数据覆盖。
+         *
+         * 如果生产者获取的可用序号大于等于所有消费者的序号最值的值，代表发生了冲突，生产者必须等待消费者消费完后再继续生产。
+         *
+         */
+
+        // wrapPoint > cachedGatingSequence
+        // 如果wrapPoint比当前的cachedValue还大，如果上次消费者还未消费成功，可能再次发生冲突
+        // cachedGatingSequence > nextValue
+        // 只会在https://github.com/LMAX-Exchange/disruptor/issues/76情况下存在，跑测试用例复现不出来。。
         if (wrapPoint > cachedGatingSequence || cachedGatingSequence > nextValue)
         {
             cursor.setVolatile(nextValue);  // StoreLoad fence
 
+            // 获取消费者的最小序号，因为生产者获取的下一个可用序号不能超过该最小序号，否则会造成数据被覆盖
             long minSequence;
             while (wrapPoint > (minSequence = Util.getMinimumSequence(gatingSequences, nextValue)))
             {
