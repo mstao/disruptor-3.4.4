@@ -149,12 +149,15 @@ public final class SingleProducerSequencer extends SingleProducerSequencerFields
         // 只会在https://github.com/LMAX-Exchange/disruptor/issues/76情况下存在，跑测试用例复现不出来。。
         if (wrapPoint > cachedGatingSequence || cachedGatingSequence > nextValue)
         {
+            // 这个是什么意思？
+            // https://github.com/LMAX-Exchange/disruptor/issues/291
             cursor.setVolatile(nextValue);  // StoreLoad fence
 
             // 获取消费者的最小序号，因为生产者获取的下一个可用序号不能超过该最小序号，否则会造成数据被覆盖
             long minSequence;
             while (wrapPoint > (minSequence = Util.getMinimumSequence(gatingSequences, nextValue)))
             {
+                // 生产者一直自旋
                 LockSupport.parkNanos(1L); // TODO: Use waitStrategy to spin?
             }
 
@@ -224,7 +227,25 @@ public final class SingleProducerSequencer extends SingleProducerSequencerFields
     @Override
     public void publish(long sequence)
     {
+        // 游标设置为当前的sequence
+        // 这里
+        // https://github.com/LMAX-Exchange/disruptor/issues/265
+
+        /**
+         * A store/store barrier is sufficient in this case as all we need to guarantee is that the message data is stored to "memory"* before the update to the sequence value.
+         * A setVolatile is only required if we are reading and writing concurrent data on the same thread, in our case we are only writing.
+         *
+         * On the reading thread we only need a load/load barrier to ensure that the message data is read from "memory" after the sequence is read.
+         * So in the situation where the reading thread sees the sequence value increment the message data will be visible as the
+         * data ordering is transitive. I.e. if storing the message data happens before updating the sequence and updating the sequence happens
+         * before the new sequence is read and reading the message data happens after the sequence is read, we can infer that writing the message data
+         * happens before the message data is read.
+         *
+         * "memory" in this instance is the abstract notion of memory, not physical ram.
+         */
+
         cursor.set(sequence);
+        // 通知消费者去消费数据
         waitStrategy.signalAllWhenBlocking();
     }
 
