@@ -28,7 +28,7 @@ public interface WaitStrategy
      * about message becoming available should remember to handle this case.  The {@link BatchEventProcessor} explicitly
      * handles this case and will signal a timeout if required.
      *
-     * @param sequence          to be waited on.
+     * @param sequence          to be waited on. 在哪个序号上进行等待
      * @param cursor            the main sequence from ringbuffer. Wait/notify strategies will
      *                          need this as it's the only sequence that is also notified upon update.
      * @param dependentSequence on which to wait.

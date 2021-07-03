@@ -113,15 +113,17 @@ public final class BatchEventProcessor<T>
     @Override
     public void run()
     {
+        // CAS更新状态为RUNNING
         if (running.compareAndSet(IDLE, RUNNING))
         {
             sequenceBarrier.clearAlert();
 
+            // 通知实现了LifecycleAware接口的EventHandler启动
             notifyStart();
             try
             {
                 if (running.get() == RUNNING)
-                {
+                {   // 处理消息
                     processEvents();
                 }
             }
@@ -150,12 +152,14 @@ public final class BatchEventProcessor<T>
     private void processEvents()
     {
         T event = null;
+        // 获取下一个可以消费的序号，注意sequence默认是从-1开始
         long nextSequence = sequence.get() + 1L;
 
         while (true)
         {
             try
             {
+                // 消费者需要判断下个序号的数据是否可以消费，不能消费的话，需要进行等待操作
                 final long availableSequence = sequenceBarrier.waitFor(nextSequence);
                 if (batchStartAware != null)
                 {

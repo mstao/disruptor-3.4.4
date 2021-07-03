@@ -228,7 +228,7 @@ public final class SingleProducerSequencer extends SingleProducerSequencerFields
     public void publish(long sequence)
     {
         // 游标设置为当前的sequence
-        // 这里
+        // 这里是什么意思呢？
         // https://github.com/LMAX-Exchange/disruptor/issues/265
 
         /**
