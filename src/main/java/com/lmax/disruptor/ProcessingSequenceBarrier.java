@@ -59,13 +59,15 @@ final class ProcessingSequenceBarrier implements SequenceBarrier
         //    2、BlockingWaitStrategy则会阻塞等待given sequence可用为止，可用并不是说availableSequence == given sequence，而应当是指 >=
         long availableSequence = waitStrategy.waitFor(sequence, cursorSequence, dependentSequence, this);
 
-        // 如果返回的可用序号小于给定的sequence，那么直接返回
+        // 产生比预期的sequence小,可能序号被重置回老的的oldSequence值
+        // 可参考https://github.com/LMAX-Exchange/disruptor/issues/76
         if (availableSequence < sequence)
         {
             return availableSequence;
         }
 
-        //
+        // 获取最大的可用的已经发布的sequence，可能比sequence小
+        // 会在多生产者中出现，当生产者1获取到序号13，生产者2获取到14；生产者1没发布，生产者2发布，会导致获取的可用序号为12，而sequence为13
         return sequencer.getHighestPublishedSequence(sequence, availableSequence);
     }
 

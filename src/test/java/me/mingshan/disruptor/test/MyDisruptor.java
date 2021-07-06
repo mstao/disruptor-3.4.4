@@ -28,6 +28,7 @@ public class MyDisruptor {
         event.setId("" + i);
       } finally {
         ringBuffer.publish(sequence);
+        System.out.println("publish，" + sequence);
       }
       Thread.sleep(10);
     }
@@ -62,8 +63,8 @@ public class MyDisruptor {
     disruptor.handleEventsWith(new EventHandler<Message>() {
       @Override
       public void onEvent(Message event, long sequence, boolean endOfBatch) throws Exception {
+        System.out.println("consume，" + sequence);
         System.out.println(event);
-        System.out.println(sequence);
         System.out.println(endOfBatch);
       }
     });
