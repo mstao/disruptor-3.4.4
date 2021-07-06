@@ -8,6 +8,9 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadFactory;
 
+/**
+ * 默认有多少个消费者，启动多少个线程，彼此之间互不干扰
+ */
 public class BasicExecutor implements Executor
 {
     private final ThreadFactory factory;

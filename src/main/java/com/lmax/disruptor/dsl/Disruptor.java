@@ -398,6 +398,7 @@ public class Disruptor<T>
     public RingBuffer<T> start()
     {
         checkOnlyStartedOnce();
+        // 启动消费者实现的EventProcessor
         for (final ConsumerInfo consumerInfo : consumerRepository)
         {
             consumerInfo.start(executor);
@@ -554,13 +555,16 @@ public class Disruptor<T>
         final Sequence[] processorSequences = new Sequence[eventHandlers.length];
         final SequenceBarrier barrier = ringBuffer.newBarrier(barrierSequences);
 
+        // eventHandlers此时是并行处理，所以需要多个不同的处理器
         for (int i = 0, eventHandlersLength = eventHandlers.length; i < eventHandlersLength; i++)
         {
             final EventHandler<? super T> eventHandler = eventHandlers[i];
 
+            // 每一个eventHandler对应一个BatchEventProcessor
             final BatchEventProcessor<T> batchEventProcessor =
                 new BatchEventProcessor<>(ringBuffer, barrier, eventHandler);
 
+            // 添加异常处理器
             if (exceptionHandler != null)
             {
                 batchEventProcessor.setExceptionHandler(exceptionHandler);

@@ -56,6 +56,7 @@ abstract class RingBufferFields<E> extends RingBufferPad
     private final long indexMask;
     private final Object[] entries;
     protected final int bufferSize;
+    // 消费者使用
     protected final Sequencer sequencer;
 
     RingBufferFields(
